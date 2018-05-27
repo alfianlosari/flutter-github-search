@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:github_search/api.dart';
 import 'package:github_search/repo.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:async';
 
 class Home extends StatefulWidget {
   Home({Key key}) : super(key: key);
@@ -12,7 +11,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  List<Repo> _repos;
+  List<Repo> _repos = List();
+  bool _isFetching = false;
+  String _error;
 
   @override
   void initState() {
@@ -21,9 +22,19 @@ class _HomeState extends State<Home> {
   }
 
   void loadTrendingRepos() async {
+    setState(() {
+      _isFetching = true;
+      _error = null;
+    });
+
     final repos = await Api.getTrendingRepositories();
     setState(() {
-      this._repos = repos;
+      _isFetching = false;
+      if (repos != null) {
+        this._repos = repos;
+      } else {
+        _error = 'Error fetching repos';
+      }
     });
   }
 
@@ -59,11 +70,14 @@ class _HomeState extends State<Home> {
   }
 
   Widget buildBody(BuildContext context) {
-    if (_repos == null) {
+    if (_isFetching) {
+      return Container(
+          alignment: Alignment.center, child: Icon(Icons.timelapse));
+    } else if (_error != null) {
       return Container(
           alignment: Alignment.center,
           child: Text(
-            'No Repositories',
+            _error,
             style: Theme.of(context).textTheme.headline,
           ));
     } else {
@@ -79,7 +93,6 @@ class _HomeState extends State<Home> {
 
 class GithubItem extends StatelessWidget {
   final Repo repo;
-
   GithubItem(this.repo);
 
   @override
