@@ -9,6 +9,29 @@ class Api {
   static final HttpClient _httpClient = HttpClient();
   static final String _url = "api.github.com";
 
+  static Future<List<Repo>> getRepositoriesWithSearchQuery(String query) async {
+    final uri = Uri.https(_url, '/search/repositories', {
+      'q': query,
+      'sort': 'stars',
+      'order': 'desc',
+      'page': '0',
+      'per_page': '25'
+    });
+
+    final jsonResponse = await _getJson(uri);
+    if (jsonResponse == null) {
+      return null;
+    }
+    if (jsonResponse['errors'] != null) {
+      return null;
+    }
+    if (jsonResponse['items'] == null) {
+      return List();
+    }
+
+    return Repo.mapJSONStringToList(jsonResponse['items']);
+  }
+
   static Future<List<Repo>> getTrendingRepositories() async {
     final lastWeek = DateTime.now().subtract(Duration(days: 7));
     final formattedDate = formatDate(lastWeek, [yyyy, '-', mm, '-', dd]);
